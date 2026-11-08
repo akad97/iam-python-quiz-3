@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiz Python et Django</title>
+<style>
+:root{--n:#14213d;--b:#2f6db5;--a:#e9b949;--bg:#fbfaf6;--r:#b3402a;--g:#2e7d5b;--l:#d9dce3}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 system-ui,sans-serif;background:var(--bg);color:var(--n);-webkit-user-select:none;user-select:none}
+h1,h2{font-family:Georgia,serif;margin:.2em 0}
+main{max-width:760px;margin:0 auto;padding:20px 16px 80px}
+.card{background:#fff;border:1px solid var(--l);border-radius:10px;padding:20px;margin:14px 0}
+.hide{display:none!important}
+ul{padding-left:20px}li{margin:6px 0}
+label{display:block;font-weight:600;margin:12px 0 4px}
+select{width:100%;padding:10px;border:1px solid #b9bfcc;border-radius:6px;font:inherit;background:#fff;color:var(--n)}
+select:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+select.bad{border-color:var(--r);background:#fdeeea}
+input[type=text]{width:100%;padding:10px;border:1px solid #b9bfcc;border-radius:6px;font:inherit;-webkit-user-select:text;user-select:text}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.row{grid-template-columns:1fr}}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--n);background:#fff;color:var(--n);padding:10px 16px}
+button.p{background:var(--n);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.warn{background:#fdf0cf;border-left:4px solid var(--a);padding:10px 14px;border-radius:4px}
+.bar{position:sticky;top:0;z-index:5;background:var(--n);color:#fff;display:flex;justify-content:space-between;gap:10px;padding:10px 16px;font-weight:600}
+.bar.low #tm{color:#ffb4a2}
+.opt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;border:1.5px solid var(--l)}
+.opt.sel{border-color:var(--b);background:#eaf1fa;font-weight:600}
+.q{font-size:1.1em;font-weight:600}
+code{font-family:Consolas,monospace;background:#eef0f4;padding:1px 5px;border-radius:4px;font-size:.95em;white-space:pre-wrap}
+#grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+#grid button{width:38px;padding:6px 0;font-size:.9em}
+#grid .ok{background:#cfe0f5;border-color:var(--b)}
+#grid .cur{outline:3px solid var(--a)}
+.nav{display:flex;justify-content:space-between;margin-top:16px}
+#modal{position:fixed;inset:0;background:rgba(20,33,61,.75);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
+#modal .card{max-width:440px}
+.req{color:var(--r)}input.bad{border-color:var(--r);background:#fdeeea}
+code.blk{display:block;margin-top:12px;padding:12px 14px;font-weight:400;white-space:pre;overflow-x:auto;font-size:.9em;line-height:1.5}
+.big{font:700 3em Georgia,serif}
+</style></head><body>
+<div class="bar hide" id="bar"><span id="who"></span><span>Q <span id="qn"></span>/20</span><span>⏱ <span id="tm">30:00</span></span><span>Sorties : <span id="so">0</span></span></div>
+<main>
+<section id="intro">
+<h1>Quiz Python et Django</h1>
+<p>Premiers pas en Python, conditions et boucles, chaînes et structures de données, puis Django de A à Z.</p>
+<div class="card"><h2>Règles du quiz</h2><ul>
+<li><b>20 questions</b> à choix multiple, une seule bonne réponse, <b>1 point</b> chacune : note sur 20.</li>
+<li>Les questions sont <b>tirées au hasard</b> dans une banque de 100 (5 par partie du cours) : <b>chaque étudiant a une série différente</b>, et l’ordre des réponses est mélangé.</li>
+<li><b>Démarrage par l’enseignant :</b> le quiz ne démarre qu’avec le <b>code d’activation</b> donné par l’enseignant, et seulement pendant l’horaire prévu.</li>
+<li><b>Durée : 30 minutes.</b> Le chronomètre démarre au clic sur « Commencer ». À zéro, le quiz est validé automatiquement.</li>
+<li>Vous pouvez naviguer entre les questions et changer une réponse jusqu’à la validation finale.</li>
+<li><b>Ne quittez jamais la page</b> : changer d’onglet, de fenêtre ou d’application, ou actualiser la page, compte comme une <b>sortie</b>.</li>
+<li><b>1ʳᵉ sortie</b> : avertissement, sans pénalité. <b>Dès la 2ᵉ sortie</b> : <b>−1 point par sortie</b>. <b>À la 3ᵉ sortie</b> : le quiz est clos et noté immédiatement.</li>
+<li>Copier, coller et clic droit sont désactivés. <b>Un seul envoi par code étudiant</b> : un code déjà utilisé ne peut plus démarrer le quiz.</li>
+<li>Votre résultat est envoyé automatiquement à l’enseignant à la fin.</li></ul>
+<div class="warn">Fermez les autres applications et désactivez les notifications avant de commencer.</div></div>
+<div class="card"><h2>Votre identité</h2>
+<div class="row"><div><label for="nom">Nom <span class="req">*</span></label><input type="text" id="nom" autocomplete="off" required aria-required="true"></div>
+<div><label for="prenom">Prénom <span class="req">*</span></label><input type="text" id="prenom" autocomplete="off" required aria-required="true"></div>
+<div><label for="classe">Classe <span class="req">*</span></label><select id="classe"><option value="">Choisir…</option><option>BIG 3 A</option><option>BIG 3 B</option></select></div>
+<div><label for="code">Code étudiant <span class="req">*</span></label><input type="text" id="code" autocomplete="off"></div></div>
+<label for="act">Code d’activation (donné par l’enseignant) <span class="req">*</span></label><input type="text" id="act" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<label style="font-weight:400;margin-top:16px"><input type="checkbox" id="ok"> J’ai lu et j’accepte les règles ci-dessus.</label>
+<p id="err" style="color:var(--r);min-height:1.5em"></p>
+<button class="p" id="go">Commencer le quiz</button></div>
+</section>
+<section id="quiz" class="hide">
+<div class="card"><p id="qt" class="q"></p><div id="ops"></div>
+<div class="nav"><button id="pv">Précédent</button><button id="nx" class="p">Suivant</button></div>
+<div id="grid"></div></div></section>
+<section id="end" class="hide">
+<div class="card"><h2 id="eh">Quiz terminé</h2><div class="big" id="sc"></div><p id="dt"></p><p id="st" class="warn"></p>
+<button id="rs">Renvoyer le résultat</button> <button id="dl">Télécharger le résultat (CSV)</button></div></section>
+</main>
+<div id="modal" class="hide"><div class="card"><h2 id="mh"></h2><p id="mp"></p><div id="mb"></div></div></div>
+<script>
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzXntdZ5crNoJPEuLf2GtvLc9FpPj7P0EJF7vNwQ8pLmpMP5sr3_Gq_kEe6jK3p3RWn_g/exec";               // URL du script Google Apps Script (voir explications)
+const DUREE=30*60, MAXS=3, KEY="quizpydj_100_v1", QUIZ="Python-Django 100q";
+// [question, [bonne réponse, faux, faux, faux], partie] — numérotation identique au document (Q[0] = question 1)
+const Q=[
+["Comment qualifie-t-on le langage Python ?", ["Un langage de haut niveau, interprété", "Un langage de bas niveau, compilé", "Un langage machine propre à chaque processeur", "Un langage de haut niveau, compilé en fichier exécutable"], 0],
+["Parmi ces éléments, lequel ne fait PAS partie des cinq briques de tout programme ?", ["La compilation", "La répétition", "L’entrée", "La condition"], 0],
+["Dans Jupyter Notebook, quel raccourci exécute une cellule ?", ["Maj + Entrée", "Entrée seule", "Alt + F4", "Ctrl + S"], 0],
+["Qu’affiche ce code ? `\nprint(\"42\" + \"8\")`", ["428", "42 8", "50", "Une erreur"], 0],
+["Que vaut 47 // 14 ?", ["3", "4", "5", "3.357…"], 0],
+["Que vaut 47 % 14 ?", ["5", "0.357", "14", "3"], 0],
+["Qu’affiche print(10 / 5) ?", ["2.0", "2", "Une erreur", "0.5"], 0],
+["Qu’affiche ce code ? `\nprint(5 * 4 + 5 / 5)`", ["21.0", "5.0", "25", "21"], 0],
+["Quel élément a la priorité la plus haute dans un calcul Python ?", ["Les parenthèses", "La multiplication *", "L’addition +", "La puissance **"], 0],
+["Lequel de ces noms de variable est valide ?", ["mon_angle", "for", "1angle", "mon angle"], 0],
+["Qu’affiche print(type(3 > 5)) ?", ["<class 'bool'>", "False", "<class 'str'>", "<class 'int'>"], 0],
+["Quel est le type de 10 / 2 ?", ["float", "int", "str", "bool"], 0],
+["Que se passe-t-il avec cette ligne ? `\nprint(\"Age : \" + 20)`", ["Une erreur TypeError : on ne peut pas additionner du texte et un nombre", "Elle affiche Age : 20", "Elle affiche Age : 0", "Une erreur SyntaxError"], 0],
+["Que provoque int(\"bonjour\") ?", ["Une erreur (ValueError) : le texte ne ressemble pas à un nombre", "Il renvoie 0", "Il renvoie le nombre de lettres, 7", "Il renvoie \"bonjour\" sans changement"], 0],
+["Quel est le type de la valeur renvoyée par input() ?", ["Toujours str (du texte)", "Toujours int", "int ou float selon ce que l’on tape", "bool"], 0],
+["Quelle est la valeur finale de compteur ? `\ncompteur = 10\ncompteur += 90\ncompteur -= 80\ncompteur *= 5\ncompteur /= 10\ncompteur **= 3`", ["1000.0", "10.0", "1000", "100.0"], 0],
+["Qu’affiche print(\"Ha\" * 3) ?", ["HaHaHa", "Ha Ha Ha", "Une erreur", "Ha3"], 0],
+["Comment échanger les valeurs de a et b en une seule ligne ?", ["a, b = b, a", "a == b", "swap(a, b)", "a = b = a"], 0],
+["Combien de minutes et de secondes y a-t-il dans 1 000 secondes ?", ["16 min 40 s (1000 // 60 et 1000 % 60)", "16 min 66 s", "16,6 min et 0 s", "10 min 0 s"], 0],
+["Que donne la conversion de 98 °F en Celsius avec celsius = (fahrenheit - 32) * 5 / 9 ?", ["Environ 36.67", "Exactement 37", "Environ 66", "Environ 54.4"], 0],
+["Quel caractère commence un commentaire en Python ?", ["#", "--", "//", "/*"], 0],
+["On veut la moyenne de 12 et 16, mais le code affiche 20.0. De quel type d’erreur s’agit-il ? `\nmoyenne = 12 + 16 / 2\nprint(moyenne)`", ["Une erreur sémantique", "Une erreur de syntaxe", "Une erreur d’exécution", "Ce n’est pas une erreur"], 0],
+["print(25 / 0) provoque une erreur de quel type ?", ["Une erreur d’exécution (ZeroDivisionError)", "Une erreur de syntaxe", "Une erreur sémantique", "Aucune : il affiche 0"], 0],
+["Quel message obtient-on avec Print(\"Je suis un bug\") ?", ["NameError : name 'Print' is not defined", "Aucun : Python ignore la majuscule", "SyntaxError : invalid syntax", "TypeError"], 0],
+["Que provoque cette ligne ? `\nangle1, angle2, angle3 = 30, 45, 60, 90`", ["ValueError : too many values to unpack", "angle3 vaut (60, 90)", "Elle ignore la valeur 90", "SyntaxError"], 0],
+["Qu’affiche print(3 == 3.0) ?", ["True", "Une erreur", "3", "False"], 1],
+["Qu’affiche print(\"3\" == 3) ?", ["False", "True", "None", "Une erreur TypeError"], 1],
+["Quelle est la différence entre = et == ?", ["= range une valeur dans une variable, == compare deux valeurs", "= s’utilise pour les nombres, == pour le texte", "== range une valeur, = compare", "Il n’y en a aucune"], 1],
+["Que vaut True and False ?", ["False", "Une erreur", "None", "True"], 1],
+["Que vaut True or False ?", ["True", "None", "False", "Une erreur"], 1],
+["Qu’affiche print(3 < 5 < 10) ?", ["True", "Une erreur de syntaxe", "5", "False"], 1],
+["Avec la règle des années bissextiles (divisible par 4 mais pas par 100, ou divisible par 400), quelle année n’est PAS bissextile ?", ["1900", "2000", "1600", "2024"], 1],
+["Qu’est-ce qui définit un bloc de code après un if ?", ["Les deux-points : en fin de ligne et l’indentation (4 espaces)", "Des accolades { }", "Un point-virgule à la fin", "Les mots begin et end"], 1],
+["Qu’affiche ce programme ? `\nnote = 15\nif note >= 10:\n    print(\"Passable\")\nelif note >= 14:\n    print(\"Bien\")`", ["Passable", "Rien", "Bien", "Passable puis Bien"], 1],
+["Que peut-on écrire juste après le mot else ?", ["Seulement les deux-points (else:)", "Un nombre", "Une condition, comme else note < 10:", "Le mot if"], 1],
+["Quelle liste produit list(range(2, 8)) ?", ["[2, 3, 4, 5, 6, 7]", "[2, 8]", "[2, 3, 4, 5, 6, 7, 8]", "[0, 1, 2, 3, 4, 5, 6, 7]"], 1],
+["Quelle liste produit list(range(0, 20, 5)) ?", ["[0, 5, 10, 15]", "[0, 20, 5]", "[5, 10, 15, 20]", "[0, 5, 10, 15, 20]"], 1],
+["Quelle liste produit list(range(10, 0, -2)) ?", ["[10, 8, 6, 4, 2]", "[]", "[0, 2, 4, 6, 8, 10]", "[10, 8, 6, 4, 2, 0]"], 1],
+["Quel range() faut-il pour afficher les nombres de 1 à 10 ?", ["range(1, 11)", "range(1, 10)", "range(0, 10)", "range(10)"], 1],
+["Combien de lignes affiche ce code ? `\nfor lettre in \"Mali\":\n    print(lettre)`", ["4", "1", "5", "Une erreur : on ne peut pas parcourir un texte"], 1],
+["Qu’affiche ce code ? `\nsomme = 0\nfor i in range(1, 11):\n    somme += i\nprint(somme)`", ["55", "10", "66", "45"], 1],
+["Pourquoi ce programme ne s’arrête-t-il jamais ? `\ni = 0\nwhile i < 5:\n    print(i)`", ["Parce que i n’est jamais modifié : il faut ajouter i += 1", "Parce que while ne fonctionne pas avec <", "Parce que print() bloque la boucle", "Parce qu’il manque un else"], 1],
+["Quand préfère-t-on while à for ?", ["Quand le nombre de tours est inconnu à l’avance", "Pour afficher une table de multiplication", "Pour additionner les nombres de 1 à 100", "Quand on parcourt les lettres d’un texte"], 1],
+["Que fait le mot-clé break ?", ["Il quitte la boucle immédiatement", "Il passe au tour suivant", "Il met le programme en pause", "Il recommence la boucle depuis le début"], 1],
+["Qu’affiche ce code ? `\nfor i in range(1, 11):\n    if i % 4 == 0:\n        continue\n    print(i, end=\" \")`", ["1 2 3 5 6 7 9 10", "4 8", "1 2 3 4 5 6 7 8 9 10", "1 2 3"], 1],
+["Que se passe-t-il si on écrit break en dehors de toute boucle ?", ["Une SyntaxError", "Le programme s’arrête normalement", "Une boucle infinie", "Rien, la ligne est ignorée"], 1],
+["Pourquoi ce code provoque-t-il une erreur ? `\nage = input(\"Ton âge : \")\nif age >= 18:\n    print(\"Majeur\")`", ["input() renvoie du texte : il faut int(input(...))", "18 doit être écrit \"18\"", "Il manque un else", "Le mot age est réservé"], 1],
+["Comment corrige-t-on else if note >= 8: ?", ["elif note >= 8:", "else: if note >= 8", "else (note >= 8):", "elseif note >= 8:"], 1],
+["On veut la somme 1 + 2 + 3 + 4 + 5. Qu’affiche ce code ? `\nfor i in range(1, 6):\n    somme = 0\n    somme += i\nprint(somme)`", ["5", "0", "Une erreur", "15"], 1],
+["Quel message signale l’oubli des deux-points à la fin d’un if ?", ["SyntaxError: expected ':'", "TypeError", "NameError", "IndentationError"], 1],
+["Avec ville = \"Bamako\", que vaut ville[-1] ?", ["'o'", "'B'", "Une erreur IndexError", "'k'"], 2],
+["Avec t = \"Tombouctou\", que vaut t[0:4] ?", ["'Tomb'", "'Tombo'", "'ombo'", "'Tom'"], 2],
+["Avec t = \"Tombouctou\", que vaut t[::-1] ?", ["'uotcuobmoT'", "'Tmoco'", "'u'", "'Tombouctou'"], 2],
+["Avec mot = \"Londre\", que vaut mot[::-2] ?", ["'edo'", "'Lnr'", "'erdnoL'", "'er'"], 2],
+["Avec s = \"Bonjour Kati\", que renvoie s.find(\"Kati\") ?", ["8", "7", "1", "True"], 2],
+["Que renvoie \"-\".join([\"a\", \"b\", \"c\"]) ?", ["'a-b-c'", "['a-b-c']", "'abc'", "'-a-b-c-'"], 2],
+["Que vaut s après ce code ? `\ns = \"kati\"\ns.upper()`", ["'kati'", "None", "'Kati'", "'KATI'"], 2],
+["Qu’affiche ce code ? `\nprix = 1234.5\nprint(f\"{prix:.2f} FCFA\")`", ["1234.50 FCFA", "{prix:.2f} FCFA", "12.34 FCFA", "1234.5 FCFA"], 2],
+["Que provoque ce code ? `\nmot = \"mali\"\nmot[0] = \"M\"`", ["TypeError : 'str' object does not support item assignment", "KeyError", "IndexError", "mot devient \"Mali\""], 2],
+["Avec mot = \"Mali\", que provoque print(mot[4]) ?", ["IndexError : string index out of range", "Il affiche 'i'", "Il affiche une chaîne vide", "KeyError"], 2],
+["Que contient villes à la fin ? `\nvilles = [\"Kati\", \"Bamako\"]\nvilles.append(\"Ségou\")\nvilles.insert(0, \"Kayes\")`", ["['Kayes', 'Kati', 'Bamako', 'Ségou']", "['Kati', 'Kayes', 'Bamako', 'Ségou']", "['Kati', 'Bamako', 'Ségou', 'Kayes']", "['Kayes', 'Ségou', 'Kati', 'Bamako']"], 2],
+["Que fait derniere = villes.pop() ?", ["Il retire le dernier élément de la liste et le renvoie", "Il renvoie le dernier élément sans le retirer", "Il vide la liste", "Il retire le premier élément"], 2],
+["Qu’affiche ce code ? `\nnombres = [3, 1, 2]\nnombres = nombres.sort()\nprint(nombres)`", ["None", "[3, 1, 2]", "Une erreur", "[1, 2, 3]"], 2],
+["Pourquoi notes.append(15, 17) provoque-t-il une erreur ?", ["append() n’accepte qu’un seul élément à la fois", "notes doit être un tuple", "Une liste ne peut contenir que des textes", "Il faut écrire append[15, 17]"], 2],
+["Avec notes = [12, 15, 9, 17], que vaut sum(notes) / len(notes) ?", ["13.25", "53", "4", "13"], 2],
+["On veut les 3 premiers éléments d’une liste fruits. Quelle écriture est correcte ?", ["fruits[0:3]", "fruits[1:3]", "fruits[3]", "fruits[0:2]"], 2],
+["Qu’affiche ce code ? `\ndate = (25, 10, 2026)\njour, mois, annee = date\nprint(mois)`", ["10", "Une erreur", "25", "(25, 10, 2026)"], 2],
+["Que provoque point[0] = 5 si point = (3, 7) ?", ["TypeError : 'tuple' object does not support item assignment", "IndexError", "point devient [5, 7]", "point devient (5, 7)"], 2],
+["Avec prix = {\"pain\": 250, \"lait\": 500}, que provoque print(prix[\"sucre\"]) ?", ["KeyError : 'sucre'", "Il affiche None", "Il affiche 0", "IndexError"], 2],
+["Avec prix = {\"riz\": 600}, que renvoie prix.get(\"lait\", 0) ?", ["0", "Une KeyError", "600", "None"], 2],
+["On veut le prix total d’un dictionnaire prix. Pourquoi ce code échoue-t-il ? `\ntotal = 0\nfor p in prix:\n    total += p`", ["for p in prix parcourt les clés (des textes) : il faut prix.values()", "total doit valoir 0.0", "Il faut écrire prix.keys()", "On ne peut pas parcourir un dictionnaire"], 2],
+["Avec A = {1, 2, 3, 4} et B = {3, 4, 5}, que vaut A & B ?", ["{3, 4}", "{1, 2, 3, 4, 5}", "{1, 2}", "{5}"], 2],
+["Combien de valeurs contient set([3, 1, 3, 2, 1, 5, 2, 3]) ?", ["4", "5", "3", "8"], 2],
+["Que provoque print(pays[0]) si pays = {\"Mali\", \"Niger\", \"Tchad\"} ?", ["TypeError : 'set' object is not subscriptable", "KeyError", "Il affiche 'Tchad'", "Il affiche 'Mali'"], 2],
+["Que produit la compréhension [x ** 3 for x in range(1, 6)] ?", ["[1, 8, 27, 64, 125]", "[3, 6, 9, 12, 15]", "[1, 4, 9, 16, 25]", "[0, 1, 8, 27, 64]"], 2],
+["Quelle architecture Django suit-il ?", ["MVT : Modèle - Vue - Template", "MVC strict : Modèle - Vue - Contrôleur", "Client - Serveur - Base", "MVVM"], 3],
+["Dans l’architecture MVT, quel est le rôle du Template ?", ["Définir la structure de la sortie (souvent une page HTML)", "Recevoir la requête HTTP et appliquer la logique métier", "Installer les dépendances", "Définir les tables de la base de données"], 3],
+["Que signifie l’expression « batteries incluses » pour Django ?", ["Il fournit de nombreuses fonctionnalités intégrées (authentification, admin, ORM…)", "Il inclut un navigateur web", "Il ne nécessite pas Python", "Il fonctionne sans électricité"], 3],
+["À quoi sert un environnement virtuel (venv) ?", ["Isoler Python et les bibliothèques de chaque projet pour éviter les conflits", "Remplacer la base de données", "Accélérer l’ordinateur", "Héberger le site en ligne"], 3],
+["Quelle commande crée un environnement virtuel nommé env sous macOS/Linux ?", ["python3 -m venv env", "pip install env", "mkdir env", "django-admin venv env"], 3],
+["Comment active-t-on cet environnement sous macOS/Linux ?", ["source env/bin/activate", "activate env", "deactivate", "python env"], 3],
+["Quelle commande installe Django dans l’environnement activé ?", ["pip install django", "django-admin install", "python install django", "apt get django"], 3],
+["Dans django-admin startproject config . , à quoi sert le point final ?", ["À créer le projet dans le dossier actuel, sans dossier supplémentaire", "À terminer la commande comme une phrase", "À lancer le serveur", "À créer un projet caché"], 3],
+["Quel fichier est le « couteau suisse » d’un projet Django ?", ["manage.py", "wsgi.py", "settings.py", "__init__.py"], 3],
+["Quel fichier contient tous les réglages du projet ?", ["settings.py", "urls.py", "models.py", "views.py"], 3],
+["Quelle commande lance le serveur de développement ?", ["python manage.py runserver", "python manage.py startserver", "django-admin run", "pip runserver"], 3],
+["Quelle est la différence entre un projet et une application Django ?", ["Le projet est la maison (réglages globaux), l’application une pièce (une fonctionnalité précise)", "L’application contient plusieurs projets", "Le projet ne contient qu’une seule application", "Il n’y en a aucune"], 3],
+["Quelle commande crée une application nommée pages ?", ["python manage.py startapp pages", "python manage.py createapp pages", "mkdir pages", "django-admin startproject pages"], 3],
+["Où enregistre-t-on une nouvelle application pour que Django la connaisse ?", ["Dans la liste INSTALLED_APPS de settings.py", "Dans models.py", "Dans manage.py", "Dans urls.py"], 3],
+["Qu’est-ce qu’une vue dans Django ?", ["Une fonction (ou classe) qui prend une requête et renvoie une réponse", "Une table de la base de données", "Un fichier HTML", "Une commande du terminal"], 3],
+["D’où importe-t-on HttpResponse ?", ["from django.http import HttpResponse", "from django.urls import HttpResponse", "from django.shortcuts import HttpResponse", "import HttpResponse"], 3],
+["Dans config/urls.py, que fait path('', include('pages.urls')) ?", ["Il délègue les URLs de la racine au fichier pages/urls.py", "Il crée l’application pages", "Il supprime les URLs de pages", "Il lance la vue home_page_view"], 3],
+["Dans path('', views.home_page_view, name='home'), à quoi sert name='home' ?", ["À donner un nom unique à la route pour y faire référence ailleurs (templates…)", "À créer une variable Python home", "À définir le titre de la page", "À nommer le fichier HTML"], 3],
+["Dans render(request, 'home.html', context), que représente context ?", ["Un dictionnaire de données transmis au template", "Le nom du fichier CSS", "La base de données", "La liste des URLs"], 3],
+["Quelle syntaxe affiche une variable dans un template Django ?", ["{{ variable }}", "<?variable?>", "{% variable %}", "$variable"], 3],
+["Dans une boucle {% for %}, quand le bloc {% empty %} s’affiche-t-il ?", ["Quand la liste parcourue est vide", "Jamais, c’est un commentaire", "À chaque tour de boucle", "Après le dernier élément"], 3],
+["Si nom_utilisateur vaut 'Bob', qu’affiche {{ nom_utilisateur|upper }} ?", ["BOB", "3", "Bob", "bob"], 3],
+["Quel tag permet à un template d’hériter de base.html ?", ["{% extends 'base.html' %}", "{% include 'base.html' %}", "{% import 'base.html' %}", "{% block 'base.html' %}"], 3],
+["Quel argument est obligatoire pour un champ CharField ?", ["max_length", "unique=True", "default", "null=True"], 3],
+["Après avoir modifié models.py, quelles commandes faut-il lancer, et dans quel ordre ?", ["makemigrations, puis migrate", "runserver, puis migrate", "startapp, puis makemigrations", "migrate, puis makemigrations"], 3]
+];
+const PAR_PARTIE=5; // 4 parties × 5 = 20 questions
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/`([^`]+)`/g,(m,c)=>c[0]==="\n"?'<code class="blk">'+c.slice(1)+"</code>":"<code>"+c+"</code>");
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+// Tirage : 5 questions au hasard dans chaque partie, puis ordre global mélangé
+function tirage(){let t=[];[...new Set(Q.map(q=>q[2]))].forEach(p=>{t=t.concat(shuf(Q.map((q,i)=>q[2]===p?i:-1).filter(i=>i>=0)).slice(0,PAR_PARTIE))});return shuf(t)}
+const pad=n=>String(n).padStart(2,"0");
+let S=null,tick=null,away=false;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function show(id){["intro","quiz","end"].forEach(x=>$(x).classList.toggle("hide",x!==id));$("bar").classList.toggle("hide",id!=="quiz")}
+function modal(h,p,btns){$("mh").textContent=h;$("mp").innerHTML=p;const b=$("mb");b.innerHTML="";btns.forEach(([t,f,c])=>{const e=document.createElement("button");e.textContent=t;if(c)e.className="p";e.onclick=()=>{$("modal").classList.add("hide");f&&f()};b.appendChild(e);b.appendChild(document.createTextNode(" "))});$("modal").classList.remove("hide")}
+$("go").onclick=()=>{
+  const id={nom:$("nom").value.trim(),prenom:$("prenom").value.trim(),classe:$("classe").value.trim(),code:$("code").value.trim().toUpperCase().replace(/\s+/g,"")};
+  const act=$("act").value.trim().toUpperCase().replace(/\s+/g,"");
+  ["nom","prenom","classe","code","act"].forEach(k=>$(k).classList.remove("bad"));
+  const nomOk=v=>v.replace(/[^A-Za-zÀ-ÿ]/g,"").length>=2;
+  const bad=[];
+  if(!nomOk(id.nom))bad.push("nom");
+  if(!nomOk(id.prenom))bad.push("prenom");
+  if(!id.classe)bad.push("classe");
+  if(!id.code)bad.push("code");
+  if(!act)bad.push("act");
+  if(bad.length){bad.forEach(k=>$(k).classList.add("bad"));$(bad[0]).focus();
+    $("err").textContent=(bad.includes("nom")||bad.includes("prenom"))?"Le nom et le prénom sont obligatoires (au moins 2 lettres chacun).":
+      bad.includes("act")&&bad.length===1?"Entrez le code d’activation donné par l’enseignant.":"Renseignez tous les champs.";return}
+  if(!$("ok").checked){$("err").textContent="Cochez la case pour accepter les règles.";return}
+  $("err").textContent="";const go=$("go");go.disabled=true;go.textContent="Vérification…";
+  demarrer(id.code,act).then(r=>{
+    go.disabled=false;go.textContent="Commencer le quiz";
+    if(!r){$("err").textContent="Impossible de joindre le serveur de l’enseignant. Vérifiez votre connexion Internet, puis réessayez.";return}
+    if(!r.ok){
+      const champ=r.raison==="deja"?"code":r.raison==="code"?"act":null;
+      if(champ){$(champ).classList.add("bad");$(champ).focus()}
+      $("err").textContent=({
+        deja:"Ce code étudiant a déjà envoyé une copie pour ce quiz. Un seul envoi est autorisé par code : adressez-vous à l’enseignant.",
+        code:"Code d’activation incorrect. Vérifiez le code donné par l’enseignant.",
+        ferme:"Le quiz n’est pas ouvert pour le moment. Attendez le signal de l’enseignant.",
+        avant:"Le quiz n’est pas encore ouvert. Ouverture le "+(r.debut||"")+".",
+        apres:"Le quiz est fermé depuis le "+(r.fin||"")+"."
+      })[r.raison]||"Démarrage refusé. Adressez-vous à l’enseignant.";
+      return}
+    modal("Prêt à commencer ?",`Code <b>${esc(id.code)}</b> accepté. Le chronomètre de 30 minutes démarre dès que vous cliquez sur « Commencer ».`,
+      [["Annuler",null],["Commencer",()=>{
+        S={id,jeton:r.jeton,ord:tirage(),opt:Q.map(()=>shuf([0,1,2,3])),rep:Q.map(()=>-1),i:0,debut:Date.now(),fin:Date.now()+DUREE*1000,sorties:0,done:false};
+        save();try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(e){}
+        start()},1]]);
+  });
+};
+// --- Démarrage contrôlé par l’enseignant : le script Google vérifie le code d’activation, l’horaire et le code étudiant ---
+function demarrer(code,act){return new Promise(res=>{
+  if(!SCRIPT_URL)return res(null);
+  const cb="dem_"+Date.now(),s=document.createElement("script");let fini=false,t;
+  const fin=v=>{if(fini)return;fini=true;clearTimeout(t);try{delete window[cb]}catch(e){window[cb]=undefined}s.remove();res(v)};
+  window[cb]=d=>fin(d&&typeof d.ok==="boolean"?d:null);
+  s.onerror=()=>fin(null);s.onload=()=>setTimeout(()=>fin(null),100);t=setTimeout(()=>fin(null),10000);
+  s.src=SCRIPT_URL+"?action=demarrer&quiz="+encodeURIComponent(QUIZ)+"&code="+encodeURIComponent(code)+"&activation="+encodeURIComponent(act)+"&callback="+cb;
+  document.head.appendChild(s);
+})}
+function start(){show("quiz");$("who").textContent=S.id.prenom+" "+S.id.nom;render();clearInterval(tick);tick=setInterval(clock,500);clock()}
+function clock(){const l=Math.ceil((S.fin-Date.now())/1000);if(l<=0){finish("temps");return}
+  $("tm").textContent=pad(Math.floor(l/60))+":"+pad(l%60);$("bar").classList.toggle("low",l<=300);$("so").textContent=S.sorties}
+function render(){
+  const qi=S.ord[S.i];$("qn").textContent=S.i+1;$("qt").innerHTML=esc(Q[qi][0]);
+  const o=$("ops");o.innerHTML="";
+  S.opt[qi].forEach((k,n)=>{const b=document.createElement("button");b.className="opt"+(S.rep[qi]===k?" sel":"");
+    b.innerHTML=String.fromCharCode(65+n)+". "+esc(Q[qi][1][k]);b.onclick=()=>{S.rep[qi]=k;save();render()};o.appendChild(b)});
+  $("pv").disabled=S.i===0;$("nx").textContent=S.i===19?"Terminer le quiz":"Suivant";
+  const g=$("grid");g.innerHTML="";
+  S.ord.forEach((q,n)=>{const b=document.createElement("button");b.textContent=n+1;b.className=(S.rep[q]>-1?"ok ":"")+(n===S.i?"cur":"");b.onclick=()=>{S.i=n;save();render()};g.appendChild(b)});
+}
+$("pv").onclick=()=>{if(S.i>0){S.i--;save();render()}};
+$("nx").onclick=()=>{
+  if(S.i<19){S.i++;save();render();return}
+  const na=S.ord.filter(q=>S.rep[q]<0).length;
+  modal("Terminer le quiz ?",na?`Il reste <b>${na}</b> question(s) sans réponse. La validation est définitive.`:"La validation est définitive.",[["Revenir",null],["Valider",()=>finish("validation"),1]]);
+};
+// --- Suivi des sorties ---
+function out(){if(!S||S.done||away)return;away=true;S.sorties++;save();$("so").textContent=S.sorties;if(S.sorties>=MAXS)finish("sorties")}
+function back(){if(!away)return;away=false;if(!S||S.done)return;warn()}
+function warn(){
+  const k=S.sorties,left=MAXS-k;
+  if(k===1)modal("⚠ Avertissement","Vous avez quitté la page (sortie n° 1). <b>Aucune pénalité cette fois.</b> À partir de la prochaine sortie : <b>−1 point par sortie</b>.",[["J’ai compris",null,1]]);
+  else modal("Pénalité : −1 point",`Sortie n° ${k}. Pénalité totale : <b>−${k-1} point(s)</b>. `+(left===1?"<b>Une sortie de plus et le quiz sera clos.</b>":`Il reste ${left-1} sortie(s) avant la clôture.`),[["J’ai compris",null,1]]);
+}
+document.addEventListener("visibilitychange",()=>document.hidden?out():back());
+window.addEventListener("blur",out);window.addEventListener("focus",back);
+["contextmenu","copy","cut","paste"].forEach(e=>document.addEventListener(e,ev=>{if(!(ev.target.tagName==="INPUT"))ev.preventDefault()}));
+// --- Fin et résultats ---
+function result(){
+  const sc=S.ord.reduce((a,q)=>a+(S.rep[q]===0?1:0),0),pen=Math.max(0,S.sorties-1);
+  return{date:new Date().toLocaleString("fr-FR"),nom:S.id.nom,prenom:S.id.prenom,classe:S.id.classe,code:S.id.code,
+    score:sc,penalites:pen,note:Math.max(0,sc-pen),sorties:S.sorties,duree_s:Math.round((Math.min(Date.now(),S.fin)-S.debut)/1000),
+    motif:S.motif||"",reponses:S.ord.map(q=>S.rep[q]<0?"-":S.rep[q]===0?"V":"F").join(""),questions:S.ord.map(q=>q+1).join(" "),quiz:QUIZ,jeton:S.jeton||""};
+}
+function finish(m){
+  if(S.done)return;S.done=true;S.motif=m;save();clearInterval(tick);
+  try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}
+  $("modal").classList.add("hide");showEnd();send();
+}
+function showEnd(){
+  const r=result();show("end");
+  $("eh").textContent=S.motif==="sorties"?"Quiz clos : trop de sorties":S.motif==="temps"?"Temps écoulé":"Quiz terminé";
+  $("sc").textContent=r.note+" / 20";
+  $("dt").innerHTML=`${r.prenom} ${r.nom} (${r.classe}) : ${r.score} bonne(s) réponse(s), pénalités −${r.penalites}, ${r.sorties} sortie(s).`;
+}
+async function send(){
+  const st=$("st");
+  if(!SCRIPT_URL){st.textContent="Envoi automatique non configuré : téléchargez le CSV et remettez-le à l’enseignant.";return}
+  st.textContent="Envoi en cours…";
+  try{await fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(result())});
+    st.textContent="Résultat envoyé à l’enseignant. Vous pouvez fermer cette page."}
+  catch(e){st.textContent="Échec de l’envoi. Vérifiez votre connexion, puis cliquez sur « Renvoyer le résultat »."}
+}
+$("rs").onclick=send;
+$("dl").onclick=()=>{const r=result();delete r.jeton;const k=Object.keys(r);
+  const csv=k.join(";")+"\n"+k.map(x=>'"'+String(r[x]).replace(/"/g,'""')+'"').join(";");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"}));
+  a.download=`quiz_python_django_${r.nom}_${r.prenom}.csv`.replace(/\s+/g,"_");a.click()};
+// --- Reprise après actualisation : compte comme une sortie ---
+(function(){
+  let raw=null;try{raw=localStorage.getItem(KEY)}catch(e){}
+  if(!raw)return;
+  try{S=JSON.parse(raw)}catch(e){S=null;return}
+  if(!Array.isArray(S.ord)||S.ord.length!==20){S=null;try{localStorage.removeItem(KEY)}catch(e){}return}
+  if(S.done){showEnd();$("st").textContent="Ce quiz a déjà été passé sur cet appareil.";return}
+  if(Date.now()>=S.fin){finish("temps");return}
+  S.sorties++;save();
+  if(S.sorties>=MAXS){finish("sorties");return}
+  start();warn();
+})();
+</script></body></html>
